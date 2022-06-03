@@ -1,5 +1,5 @@
 import json
-from flask import Flask
+from flask import Flask, abort
 from about_me import me
 from mock_data import catalog #important step
 
@@ -44,11 +44,6 @@ def get_catalog():
 
 
 
-# Reques 127.0.0.1:5000/api/product/146A
-@app.get("/api/product/<id>")
-def get_product(id):
-    return json.dumps(id)
-
 
 
 
@@ -57,8 +52,29 @@ def get_product(id):
 def get_count():
     #here... count how many products are in the list
     counts = len(catalog)
-    return json.dumps(counts)
+    return json.dumps(counts) # return the value
 
+
+
+
+
+
+# Reques 127.0.0.1:5000/api/product/146A
+@app.get("/api/product/<id>")
+def get_product(id):
+    #find the product whose _id is equal to id
+    #catalog
+    #travel the catalog with a for loop
+    #get every product inside the list
+    #if the _id of the product is equal to the id variable
+    #found it, return product as json
+
+
+    for prod in catalog:
+        if prod["_id"] == id:
+            return json.dumps(prod)
+
+    return abort(404, "Id does not match any product")
 
 
 
@@ -118,8 +134,15 @@ def get_unique_categories():
 
 
 
+# get the lowest price
+@app.get("/api/product/lowest-price")
+def get_lowest_price():
+    solution = catalog[0]
+    for prod in catalog:
+        if prod["price"] < solution["price"]:
+            solution = prod
 
-
+    return json.dumps(solution)
 
 
 app.run(debug=True)
