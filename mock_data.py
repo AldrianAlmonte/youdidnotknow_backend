@@ -1,0 +1,47 @@
+catalog = [
+{
+    "_id": "145A",
+    "price": 1.99,
+    "stock": 13,
+    "title": "Cabbage",
+    "image": "img-1.jpg",
+    "discount": 4,
+    "category": "Vegetables",
+},
+{
+    "_id": "146A",
+    "price": 2.99,
+    "stock": 34,
+    "title": "Strawberry",
+    "image": "img-1.jpg",
+    "discount": 10,
+    "category": "Fruit",
+},
+{
+    "_id": "147A",
+    "price": 1.05,
+    "stock": 45,
+    "title": "Bell Pepper",
+    "image": "img-1.jpg",
+    "discount": 4,
+    "category": "Vegetables",
+},
+{
+    "_id": "148A",
+    "price": 1.99,
+    "stock": 46,
+    "title": "Carrot",
+    "image": "img-1.jpg",
+    "discount": 5,
+    "category": "Vegetables",
+},
+{
+    "_id": "149A",
+    "price": 1.99,
+    "stock": 23,
+    "title": "Blueberry",
+    "image": "img-1.jpg",
+    "discount": 4,
+    "category": "Fruit",
+}
+]
