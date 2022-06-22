@@ -1,5 +1,6 @@
 from gettext import find
 import json
+from unittest import result
 from flask import Flask, abort, request
 from about_me import me
 from mock_data import catalog  # important step
@@ -52,11 +53,31 @@ def get_catalog():
 # POST Method  to create new products
 @app.route("/api/catalog", methods=["POST"])
 def save_product():
-    product = request.get_json()
-    db.products.insert_one(product)
-    product["_id"] = str(product["_id"])
+    try:
+        product = request.get_json()
+        errors = ""
 
-    return json.dumps(product)
+        # title exist, 5 characters long
+        if not "title" in product or len(product["title"]) < 5:
+            errors += "Title is required and should have at least 5 characters"
+
+        # must have an image
+        if not "image" in product:
+            errors += ", Product must contain an image"
+
+        # must have a price, the price should be => to 1
+        if not "price" in product or product["price"] < 1:
+            errors += ", Price is required and should be > = 1"
+
+        if errors:
+            return abort(400, errors)
+
+        db.products.insert_one(product)
+        product["_id"] = str(product["_id"])
+
+        return json.dumps(product)
+    except Exception as ex:
+        return abort(500, F"Unexpected Error: {ex}")
 
 
 # make an endpoint to send back how many product do we have in the catalog
@@ -78,8 +99,8 @@ def get_count():
 #     return json.dumps(counts)  # return the value
 
 
-# Reques 127.0.0.1:5000/api/product/146A
-@app.get("/api/product/<id>")
+# Request 127.0.0.1:5000/api/product/146A
+@app.route("/api/products/<id>", methods=["GET"])
 def get_product(id):
     # find the product whose _id is equal to id
     # catalog
@@ -88,11 +109,28 @@ def get_product(id):
     # if the _id of the product is equal to the id variable
     # found it, return product as json
 
-    for prod in catalog:
-        if prod["_id"] == id:
-            return json.dumps(prod)
+    try:
 
-    return abort(404, "Id does not match any product")
+        if not ObjectId.is_valid(id):
+            return abort(400, "Invalid id")
+
+        product = db.products.find_one({"_id": ObjectId(id)})
+
+        if not product:
+            return abort(400, "Product not found")
+
+        product["_id"] = str(product["_id"])
+        return json.dumps(product)
+
+    except Exception as ex:
+        return abort(500, "Unexpected Error")
+
+    # for prod in catalog:
+
+    #     if prod["_id"] == id:
+    #         return json.dumps(prod)
+
+    # return abort(404, "Id does not match any product")
 
 
 # Create and endpoint that returns the SUM of all the products' prices
@@ -113,13 +151,16 @@ def get_total():
 # get /api/products/<category>
 @app.get("/api/products/<category>")
 def get_products_category(category):
-    res = []
 
-    for prod in catalog:
-        if prod["category"] == category:
-            return json.dumps(prod)
+    results = []
+    cursor = db.products.find({"category": category})
 
-    return json.dump(res)
+    for prod in cursor:
+        # if prod["category"] == category:
+        prod["_id"] = str(prod["_id"])
+        results.append(prod)
+
+    return json.dumps(results)
 
 
 # get the list of categories
@@ -138,7 +179,7 @@ def get_unique_categories():
 
 
 # get the lowest price
-@app.get("/api/product/lowest-price")
+@app.get("/api/products/lowest-price")
 def get_lowest_price():
     cursor = db.products.find({})
     solution = cursor[0]
@@ -174,7 +215,7 @@ def get_all_coupons():
 def save_coupon():
     coupon = request.get_json()
 
-    # validation
+    # validations
 
     db.coupons.insert_one(coupon)
 
@@ -182,6 +223,19 @@ def save_coupon():
     return json.dumps(coupon)
 
 # get CC by code
+
+
+@app.get("/api/coupons/<code>")
+def get_products_category(code):
+
+    results = []
+    cursor = db.products.find({"code": code})
+
+    for prod in cursor:
+        prod["_id"] = str(prod["_id"])
+        results.append(prod)
+
+    return json.dumps(results)
 
 
 app.run(debug=True)
