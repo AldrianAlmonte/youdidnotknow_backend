@@ -1,14 +1,14 @@
-from gettext import find
 import json
-from unittest import result
-from flask import Flask, abort, request
+from flask import Flask, Response, abort, request
 from about_me import me
 from mock_data import catalog  # important step
 from config import db
 from bson import ObjectId
+from flask_cors import CORS
 
 
 app = Flask('youdidnotknow')
+CORS(app)
 
 
 # Request 127.0.0.1:5000/api/product/
@@ -37,7 +37,7 @@ def address():
 # Postman -> allows you to test your endpoints
 
 
-@app.route("/api/catalog", methods=["GET"])
+@app.get("/api/catalog")
 def get_catalog():
     results = []
     # get all data from the collection ({}) -> this is a filter
@@ -199,9 +199,9 @@ app.run(debug=True)
 ######################################################################
 
 # get all
-@app.route("/api/coupons", methods=["GET"])
+@app.get("/api/coupons")
 def get_all_coupons():
-    cursor = db.coupons, find({})
+    cursor = db.coupons.find({})
     results = []
     for cc in cursor:
         cc["_id"] = str(cc["_id"])
@@ -211,31 +211,64 @@ def get_all_coupons():
 
 
 # save coupon code
-@app.route("/api/coupons", methods=["POST"])
+@app.post("/api/coupons")
 def save_coupon():
-    coupon = request.get_json()
+    try:
 
-    # validations
+        coupon = request.get_json()
 
-    db.coupons.insert_one(coupon)
+        # validations
+        errors = ""
+        # discount must be 1 < discount < 50
+        # code should have at least 5 characters
+        if not "code" in coupon or len(coupon["code"]) < 5:
+            errors = "Coupon should have at least 5 characters"
 
-    coupon["_id"] = str(coupon["_id"])
-    return json.dumps(coupon)
+        if not "discount" in coupon or coupon["discount"] < 1 or coupon["discount"] > 50:
+            errors += "Discount is required and should be between 1 and 50"
+
+        if errors:
+            return Response(errors, status=400)
+
+        # do not duplicate code
+        # query db to see if there is an object with the same code
+        # if there is, return an error
+        # otherwise, save
+
+        exists = db.coupons.find_one({"code": coupon["code"]})
+
+        if exists:
+            return Response("A coupon already esist for that code", status=400)
+
+        db.coupons.insert_one(coupon)
+
+        coupon["_id"] = str(coupon["_id"])
+
+        return json.dumps(coupon)
+
+    except Exception as ex:
+        print(ex)
+        return Response("Unexpected Error", status=500)
+
 
 # get CC by code
-
-
 @app.get("/api/coupons/<code>")
-def get_products_category(code):
+def get_coupon_code(code):
 
-    results = []
-    cursor = db.products.find({"code": code})
+    # code, code > 4
+    try:
+        if not len["code"] > 4:
+            return Response("Code must contain at least 5 characters", status=400)
 
-    for prod in cursor:
-        prod["_id"] = str(prod["_id"])
-        results.append(prod)
+        coupon = db.coupons.find_one({"code": code})
+        if not coupon:
+            return Response("Coupon not found", status=404)
 
-    return json.dumps(results)
+        coupon["_id"] = str(coupon["_id"])
+
+        return json.dumps(coupon)
+    except:
+        return Response("Unexpected Error", status=500)
 
 
 app.run(debug=True)

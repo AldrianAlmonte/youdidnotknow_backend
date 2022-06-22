@@ -19,3 +19,7 @@ py -m pip install pymongo flask-pymongo "pymongo[srv]"
 #install certifi
 
 py -m pip install certifi
+
+#disable cors
+
+ py -m pip install flask-cors
