@@ -10,3 +10,12 @@ python -m venv venv
         source venv/bin/activate
     win:
         venv\Scripts\activate
+
+
+#installing pymongo
+
+py -m pip install pymongo flask-pymongo "pymongo[srv]"
+
+#install certifi
+
+py -m pip install certifi
